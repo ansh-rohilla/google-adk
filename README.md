@@ -15,6 +15,8 @@ google-adk/
 ├── code_exec_agent/           # Agent using ADK's BuiltInCodeExecutor
 ├── combined_tool_agent/       # Built-in search + Tavily + custom function + code execution
 ├── structured_output_agent/   # Pydantic schema extraction (output_schema & output_key)
+├── enquiry_pipeline_agent/    # Multi-agent SequentialAgent + LoopAgent pipeline
+│   └── run_pipeline.py
 ├── mcp_agent/                 # Filesystem MCP (stdio) + GitHub MCP (Streamable HTTP)
 ├── coding_agent/              # Coding agent with filesystem, custom safe-shell & GitHub MCPs
 │   ├── servers/shell_server.py
@@ -43,9 +45,13 @@ google-adk/
 | [`code_exec_agent/`](code_exec_agent/agent.py) | `gemini-3.5-flash` | Enables server-side Python execution with `BuiltInCodeExecutor`. |
 | [`combined_tool_agent/`](combined_tool_agent/agent.py) | `gemini-3.5-flash` | Combines `google_search`, `TavilySearch`, `get_current_time`, and `BuiltInCodeExecutor` in one agent. |
 
-### 2. Structured Outputs
+### 2. Structured Outputs & Multi-Agent Pipelines
 
 - **[`structured_output_agent/`](structured_output_agent/agent.py)**: Defines a Pydantic `Enquiry` model (`name`, `email`, `interested_in`, `budget_inr`) and configures `output_schema=Enquiry` and `output_key="enquiry"` to extract structured student enquiry data without guessing missing fields.
+- **[`enquiry_pipeline_agent/`](enquiry_pipeline_agent/agent.py)**: Extends `structured_output_agent` into a 3-stage `SequentialAgent` + `LoopAgent` workflow:
+  1. `extractor_agent` extracts the `Enquiry` Pydantic model into `enquiry` session state.
+  2. `refinement_loop` (`LoopAgent`, `max_iterations=3`) alternates between `advisor_agent` (calls `lookup_course_catalog` and writes `proposal`) and `reviewer_agent` (audits `proposal` against `enquiry`, either writing `review_feedback` or calling `exit_loop`).
+  3. `final_formatter_agent` presents the extracted enquiry summary and approved reply. Includes [`run_pipeline.py`](enquiry_pipeline_agent/run_pipeline.py) to inspect each agent's events and final session state.
 
 ### 3. MCP (Model Context Protocol) Integrations
 
@@ -117,6 +123,12 @@ Or run a specific agent directly in the terminal:
 
 ```bash
 adk run google_agent
+```
+
+### Run the Multi-Agent Enquiry Pipeline
+
+```bash
+python enquiry_pipeline_agent/run_pipeline.py
 ```
 
 ### Run the Session Runner Demo
