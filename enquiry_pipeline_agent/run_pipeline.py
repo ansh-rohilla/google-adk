@@ -37,9 +37,12 @@ async def main() -> None:
         if event.content and event.content.parts:
             for part in event.content.parts:
                 if part.function_call:
-                    print(f"[{event.author}] -> tool call: {part.function_call.name}({part.function_call.args})")
+                    print(
+                        f"[{event.author}] -> tool call: {part.function_call.name}({part.function_call.args})",
+                        flush=True,
+                    )
                 elif part.text and part.text.strip():
-                    print(f"\n--- [{event.author}] ---\n{part.text.strip()}")
+                    print(f"\n--- [{event.author}] ---\n{part.text.strip()}", flush=True)
 
     updated_session = await session_service.get_session(
         app_name=APP_NAME,

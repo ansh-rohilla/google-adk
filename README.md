@@ -48,10 +48,11 @@ google-adk/
 ### 2. Structured Outputs & Multi-Agent Pipelines
 
 - **[`structured_output_agent/`](structured_output_agent/agent.py)**: Defines a Pydantic `Enquiry` model (`name`, `email`, `interested_in`, `budget_inr`) and configures `output_schema=Enquiry` and `output_key="enquiry"` to extract structured student enquiry data without guessing missing fields.
-- **[`enquiry_pipeline_agent/`](enquiry_pipeline_agent/agent.py)**: Extends `structured_output_agent` into a 3-stage `SequentialAgent` + `LoopAgent` workflow:
+- **[`enquiry_pipeline_agent/`](enquiry_pipeline_agent/agent.py)**: Extends `structured_output_agent` into a 4-stage `SequentialAgent` + `ParallelAgent` + `LoopAgent` workflow:
   1. `extractor_agent` extracts the `Enquiry` Pydantic model into `enquiry` session state.
-  2. `refinement_loop` (`LoopAgent`, `max_iterations=3`) alternates between `advisor_agent` (calls `lookup_course_catalog` and writes `proposal`) and `reviewer_agent` (audits `proposal` against `enquiry`, either writing `review_feedback` or calling `exit_loop`).
-  3. `final_formatter_agent` presents the extracted enquiry summary and approved reply. Includes [`run_pipeline.py`](enquiry_pipeline_agent/run_pipeline.py) to inspect each agent's events and final session state.
+  2. `research_parallel` (`ParallelAgent`) concurrently runs `pricing_agent` (`calculate_pricing_plan` → `pricing_plan`) and `curriculum_agent` (`lookup_curriculum_and_faqs` → `curriculum_notes`).
+  3. `refinement_loop` (`LoopAgent`, `max_iterations=3`) alternates between `advisor_agent` (synthesizes `enquiry`, `pricing_plan`, and `curriculum_notes` into `proposal`) and `reviewer_agent` (audits `proposal` against the verified state, either writing `review_feedback` or calling `exit_loop`).
+  4. `final_formatter_agent` presents the extracted enquiry summary and approved reply. Includes [`run_pipeline.py`](enquiry_pipeline_agent/run_pipeline.py) to inspect each agent's events and final session state.
 
 ### 3. MCP (Model Context Protocol) Integrations
 
